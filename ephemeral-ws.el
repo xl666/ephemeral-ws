@@ -153,8 +153,8 @@
 	(switch-to-buffer (gethash label tabla))))))
 
 
-
-(setq proyectos-workspaces-hash (make-hash-table :test 'equal))
+(if (not (boundp 'proyectos-workspaces-hash))
+    (setq proyectos-workspaces-hash (make-hash-table :test 'equal)))
 
 (defun crear-asociacion (proyecto workspace)
   (puthash proyecto workspace proyectos-workspaces-hash))
@@ -263,3 +263,4 @@ Return values may be as follows:
 	   (mi-treemacs-do-switch-workspace workspace)
 	   (treemacs-add-project-to-workspace path-proyecto)
 	   (borrar-cache))))
+
