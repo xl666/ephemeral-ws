@@ -1,4 +1,13 @@
 
+(if (not (boundp 'proyectos-workspaces-hash))
+    (setq proyectos-workspaces-hash (make-hash-table :test 'equal)))
+
+(defun limpiar-hash (tabla workspace)
+  (maphash (lambda (key val)
+	     (if (string= workspace val)
+		 (puthash key nil tabla)))
+	   tabla))
+
 (progn (treemacs) (treemacs)) ;; asegurarse de que treemacs cargue
 
 
@@ -153,8 +162,7 @@
 	(switch-to-buffer (gethash label tabla))))))
 
 
-(if (not (boundp 'proyectos-workspaces-hash))
-    (setq proyectos-workspaces-hash (make-hash-table :test 'equal)))
+
 
 (defun crear-asociacion (proyecto workspace)
   (puthash proyecto workspace proyectos-workspaces-hash))
@@ -259,8 +267,24 @@ Return values may be as follows:
 	   (crear-asociacion proyecto workspace)
 	   (set (make-local-variable 'bufler-workspace-name) workspace)
 	   (bufler-workspace-frame-set `(,workspace))
+	   (treemacs-do-remove-workspace workspace) ; try to remove if exists, prevetns a bug
 	   (treemacs-do-create-workspace workspace)
 	   (mi-treemacs-do-switch-workspace workspace)
 	   (treemacs-add-project-to-workspace path-proyecto)
 	   (borrar-cache))))
+
+
+(defun matar-buffers (buffers)
+  (mapc (lambda (buffer)
+	  (kill-buffer buffer))
+	buffers))
+
+(defun borrar-workspace ()
+  (interactive)
+  (let* ((workspace (car (frame-parameter nil 'bufler-workspace-path))))    
+    (if workspace
+	(progn (treemacs-do-remove-workspace workspace)
+	       (limpiar-hash proyectos-workspaces-hash workspace)
+	       (matar-buffers (listar-en-workspace))
+	       (exwm-workspace-delete)))))
 
