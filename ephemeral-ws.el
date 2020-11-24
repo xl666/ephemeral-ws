@@ -288,3 +288,29 @@ Return values may be as follows:
 	       (matar-buffers (listar-en-workspace))
 	       (exwm-workspace-delete)))))
 
+
+(defun listar-workspaces (tabla)
+  (let ((resultado nil))
+    (progn (maphash (lambda (key val)
+		      (if val
+			  (setq resultado (append resultado (list val)))))
+		    tabla)
+	   resultado)))
+
+(defun get-frame-from-workspace (workspace)
+  (car (mapcan (lambda (frame)
+		 (if (string=
+		      (car (frame-parameter frame 'bufler-workspace-path))
+		      workspace)
+		     (list frame)))
+	       (frame-list))))
+
+
+(defun ephemeral-ws-switch-workspace ()
+  (interactive)
+  (let* ((ws (completing-read "Workspace to switch: "
+			      (listar-workspaces
+			       proyectos-workspaces-hash)))
+	 (frame (get-frame-from-workspace ws)))
+    (if frame
+	(exwm-workspace-switch frame))))
