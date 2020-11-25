@@ -314,3 +314,31 @@ Return values may be as follows:
 	 (frame (get-frame-from-workspace ws)))
     (if frame
 	(exwm-workspace-switch frame))))
+
+
+;; centaur tabs improvements
+
+(setq max-text-label-length 30)
+
+(defun truncate-str-middle (cadena)
+  (if (>= (length cadena) max-text-label-length)
+      (let ((middle (/ max-text-label-length 2)))
+	(concat (subseq cadena 0 (- middle 2))
+		"..."
+		(subseq cadena (- (- middle 2)))))
+    cadena))
+
+(defun mi-centaur-tabs-buffer-tab-label (tab)
+  "Return a label for TAB.
+That is, a string used to represent it on the tab bar."
+  ;; Init tab style.
+  ;; Render tab.
+  (format " %s"
+	  (let ((bufname (if centaur-tabs--buffer-show-groups
+			     (centaur-tabs-tab-tabset tab)
+			   (buffer-name (car tab)))))
+	    (if (> centaur-tabs-label-fixed-length 0)
+		(centaur-tabs-truncate-string  centaur-tabs-label-fixed-length bufname)
+	      (truncate-str-middle bufname)))))
+
+(setq centaur-tabs-tab-label-function #'mi-centaur-tabs-buffer-tab-label)
