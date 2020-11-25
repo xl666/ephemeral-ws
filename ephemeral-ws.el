@@ -124,28 +124,64 @@
 		    (append res (list (car lista)))))))
 
 
-(defun label-buffers (lista-buffs &optional res tabla)
+(defun mayor-mode-mas-largo (lista-buffs)
+  (let ((count 0))
+    (while lista-buffs
+      (progn
+	(if (> (length (quitar-major-mode (symbol-name (buffer-local-value 'major-mode (car lista-buffs)))))
+	       count)
+	    (setq count (length (symbol-name (buffer-local-value 'major-mode (car lista-buffs))))))
+	(setq lista-buffs (cdr lista-buffs))))
+    count))
+
+(defun generate-spaces-string (len)
+  (let ((cadena "")
+	(count 0))
+    (while (< count len)
+      (progn
+	(setq cadena (concat cadena " "))
+	(setq count (+ count 1))))
+    cadena))
+
+
+(defun add-padding-string (cadena longitud_deseada)
+  (if (>= (length cadena) longitud_deseada)
+      cadena
+    (concat cadena
+	    (generate-spaces-string (- longitud_deseada
+				       (length cadena))))))
+
+(defun label-buffers (lista-buffs longitud-mayor-mode &optional res tabla)
   "Adds a description to buffer based on properties and returns a hashmap description->buffer"
   (if (not lista-buffs)
       res
-    (let* ((llave (concat (symbol-name (buffer-local-value 'major-mode (car lista-buffs)))
-			  "\t »» \t"
+    (let* ((llave (concat (add-padding-string
+			   (quitar-major-mode (symbol-name (buffer-local-value 'major-mode (car lista-buffs))))
+			   longitud-mayor-mode)
+			  "»»   "
 		   (buffer-name (car lista-buffs)))))
 
       (progn (puthash llave (car lista-buffs) tabla)
 	     (label-buffers
 	      (cdr lista-buffs)
+	      longitud-mayor-mode
 	      (append res (list llave))
 	      tabla)))))
+
+(defun quitar-major-mode (buff-major-mode)
+  (if (s-ends-with-p "-mode" buff-major-mode)
+      (substring buff-major-mode 0 -5)
+    buff-major-mode))
 
 (defun tabla-buffers ()
   "Para facilitar la creación de tabla hash"
   (let* ((tabla (make-hash-table :test 'equal))
 	 (lista-buffs (quitar-buffs (listar-en-workspace)))
-	 (llaves (label-buffers
+	 (llaves (label-buffers 
 		  (if (eq (car lista-buffs) (current-buffer))
 		      (cdr lista-buffs)
 		    lista-buffs)
+		  (mayor-mode-mas-largo lista-buffs)
 		  nil tabla)))
 	  `(,llaves ,tabla)))
 
