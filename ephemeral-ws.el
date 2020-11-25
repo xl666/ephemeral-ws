@@ -180,6 +180,7 @@
 	 (llaves (label-buffers 
 		  (if (eq (car lista-buffs) (current-buffer))
 		      (cdr lista-buffs)
+		    
 		    lista-buffs)
 		  (mayor-mode-mas-largo lista-buffs)
 		  nil tabla)))
@@ -342,14 +343,29 @@ Return values may be as follows:
 	       (frame-list))))
 
 
+(defun quitar-ws-lista (ws lista-ws)
+  (mapcan (lambda (x)
+	    (if (not (string=
+		      x ws))
+		(list x)))
+	  lista-ws))
+
+
 (defun ephemeral-ws-switch-workspace ()
   (interactive)
   (let* ((ws (completing-read "Workspace to switch: "
-			      (listar-workspaces
-			       proyectos-workspaces-hash)))
+			      (if (car (frame-parameter nil 'bufler-workspace-path))
+				  (cons "*Default*"
+					(quitar-ws-lista
+				   (car (frame-parameter nil 'bufler-workspace-path))
+				   (listar-workspaces
+				    proyectos-workspaces-hash)))
+				(listar-workspaces
+				    proyectos-workspaces-hash))))
 	 (frame (get-frame-from-workspace ws)))
     (if frame
-	(exwm-workspace-switch frame))))
+	(exwm-workspace-switch frame)
+      (exwm-workspace-switch 0))))
 
 
 ;; centaur tabs improvements
