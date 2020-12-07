@@ -61,8 +61,13 @@
 		     (projectile-relevant-known-projects))))
      proyecto))
 
-(defun seleccionar-proyecto-and-buffercentral ()
+
+(defun cambiar-proyecto ()
   (helm-projectile-switch-project)
+  (switch-to-buffer (car (buffer-list))))
+
+(defun seleccionar-proyecto-and-buffercentral ()
+  (cambiar-proyecto)
   ;(projectile-switch-project-by-name path)
   (get-proyect-raiz-from-buffer (current-buffer)))
 
