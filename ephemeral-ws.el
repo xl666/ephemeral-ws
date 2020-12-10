@@ -12,14 +12,17 @@
   (if (and (not (string-match-p "*temp*" (buffer-name)))
 	   (not (string-match-p "*helm*" (buffer-name)))
 	   (not (string-match-p "*mu4e*" (buffer-name))))
-      (if (not bufler-workspace-name)
-	  (let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
-	    (if wr
-		(progn
-		  (set (make-local-variable 'bufler-workspace-name) wr)
-		  (setf bufler-cache nil)
-		  (force-mode-line-update 'all))
-	      ))))
+      (if (and (boundp 'detached) detached)
+	  (setq-local bufler-workspace-name nil)
+	(if (not bufler-workspace-name)
+	    (let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
+	      
+	      (if wr
+		  (progn
+		    (set (make-local-variable 'bufler-workspace-name) wr)
+		    (setf bufler-cache nil)
+		    (force-mode-line-update 'all))
+		)))))
   buffer)
 
 
