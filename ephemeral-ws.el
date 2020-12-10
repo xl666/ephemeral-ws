@@ -8,6 +8,23 @@
 		 (puthash key nil tabla)))
 	   tabla))
 
+(defun nombre-buff(buffer)
+  (if (and (not (string-match-p "*temp*" (buffer-name)))
+	   (not (string-match-p "*helm*" (buffer-name)))
+	   (not (string-match-p "*mu4e*" (buffer-name))))
+      (if (not bufler-workspace-name)
+	  (let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
+	    (if wr
+		(progn
+		  (set (make-local-variable 'bufler-workspace-name) wr)
+		  (setf bufler-cache nil)
+		  (force-mode-line-update 'all))
+	      ))))
+  buffer)
+
+
+
+ 
 (progn (treemacs) (treemacs)) ;; asegurarse de que treemacs cargue
 
 
@@ -399,3 +416,6 @@ That is, a string used to represent it on the tab bar."
 	      (truncate-str-middle bufname)))))
 
 (setq centaur-tabs-tab-label-function #'mi-centaur-tabs-buffer-tab-label)
+
+(advice-add 'generate-new-buffer :filter-return #'nombre-buff)
+; (advice-remove 'generate-new-buffer #'nombre-buff)
