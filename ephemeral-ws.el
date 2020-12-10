@@ -1,4 +1,5 @@
 
+
 (if (not (boundp 'proyectos-workspaces-hash))
     (setq proyectos-workspaces-hash (make-hash-table :test 'equal)))
 
@@ -12,7 +13,8 @@
   (if (and (not (string-match-p "*temp*" (buffer-name)))
 	   (not (string-match-p "*helm*" (buffer-name)))
 	   (not (string-match-p "*mu4e*" (buffer-name)))
-	   (not (string-match-p "*magit*" (buffer-name))))
+	   (not (string-match-p "magit" (buffer-name)))
+	   (not (string-match-p "*Bufler*" (buffer-name))))
       (if (and (boundp 'detached) detached)
 	  (setq-local bufler-workspace-name nil)
 	(if (not bufler-workspace-name)
@@ -116,26 +118,6 @@
 		)))
 	  (buffer-list)))
 
-(defun centaur-tabs-buffer-groups ()
-  (if (and (boundp 'cacheado) cacheado)
-      (list cacheado)
-    (if bufler-workspace-name
-	(progn (set (make-local-variable 'cacheado) bufler-workspace-name)
-	       (list bufler-workspace-name))
-
-      (if (and (boundp 'detached) detached)
-	  (progn
-	    (set (make-local-variable 'cacheado) "Emacs")
-	    (list "Emacs"))
-	(let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
-	  (if wr
-	      (progn (set (make-local-variable 'cacheado) wr)
-		     (set (make-local-variable 'bufler-workspace-name) wr)
-					;(setq-local bufler-workspace-name wr) ;; se propaga de forma rara
-		     (list wr))
-	    (progn
-	      (set (make-local-variable 'cacheado) "Emacs")
-	      (list "Emacs"))))))))
 
 (setq major-modes-ignorados '("treemacs-mode"))
 
@@ -242,46 +224,6 @@
 
 
 
-
-;; mitigar problema de buffers *temp*
-
-(defun centaur-tabs-buffer-track-killed ()
-  "Hook run just before actually killing a buffer.
-In Centaur-Tabs mode, try to switch to a buffer in the current tab bar,
-after the current buffer has been killed.  Try first the buffer in tab
-after the current one, then the buffer in tab before.  On success, put
-the sibling buffer in front of the buffer list, so it will be selected
-first."
-  (if (string-match-p "*temp*" (buffer-name))
-      nil
-    (and (eq (eval centaur-tabs-display-line-format) centaur-tabs-header-line-format)
-	 (eq centaur-tabs-current-tabset-function 'centaur-tabs-buffer-tabs)
-	 (eq (current-buffer) (window-buffer (selected-window)))
-	 (let ((bl (centaur-tabs-tab-values (centaur-tabs-current-tabset)))
-	       (b  (current-buffer))
-	       found sibling)
-	   (while (and bl (not found))
-	     (if (eq b (car bl))
-		 (setq found t)
-	       (setq sibling (car bl)))
-	     (setq bl (cdr bl)))
-	   (when (and (setq sibling (or (car bl) sibling))
-		      (buffer-live-p sibling))
-	     ;; Move sibling buffer in front of the buffer list.
-	     (save-current-buffer
-	       (switch-to-buffer sibling)))))))
-
-
-(defun centaur-tabs-on-modifying-buffer ()
-  "Function to be run after the buffer is first changed."
-  (if (string-match-p "*temp*" (buffer-name))
-      nil
-    (progn
-      (set-buffer-modified-p (buffer-modified-p))
-      (centaur-tabs-set-template centaur-tabs-current-tabset nil)
-      (centaur-tabs-display-update))))
-
-
 ; integración de treemacs
 
 
@@ -318,7 +260,8 @@ Return values may be as follows:
 	     (set (make-local-variable 'detached) 1)
 	     (setq-local cacheado nil)
 	     (setf bufler-cache nil)
-	     (force-mode-line-update 'all))))
+	     (force-mode-line-update 'all)
+	     (message "Buffer detached"))))
 
 
 ;; integración completa
@@ -395,33 +338,6 @@ Return values may be as follows:
 	(exwm-workspace-switch frame)
       (exwm-workspace-switch 0))))
 
-
-;; centaur tabs improvements
-
-(setq max-text-label-length 30)
-
-(defun truncate-str-middle (cadena)
-  (if (>= (length cadena) max-text-label-length)
-      (let ((middle (/ max-text-label-length 2)))
-	(concat (subseq cadena 0 (- middle 2))
-		"..."
-		(subseq cadena (- (- middle 2)))))
-    cadena))
-
-(defun mi-centaur-tabs-buffer-tab-label (tab)
-  "Return a label for TAB.
-That is, a string used to represent it on the tab bar."
-  ;; Init tab style.
-  ;; Render tab.
-  (format " %s"
-	  (let ((bufname (if centaur-tabs--buffer-show-groups
-			     (centaur-tabs-tab-tabset tab)
-			   (buffer-name (car tab)))))
-	    (if (> centaur-tabs-label-fixed-length 0)
-		(centaur-tabs-truncate-string  centaur-tabs-label-fixed-length bufname)
-	      (truncate-str-middle bufname)))))
-
-(setq centaur-tabs-tab-label-function #'mi-centaur-tabs-buffer-tab-label)
 
 (advice-add 'generate-new-buffer :filter-return #'nombre-buff)
 ; (advice-remove 'generate-new-buffer #'nombre-buff)
