@@ -11,7 +11,8 @@
 (defun nombre-buff(buffer)
   (if (and (not (string-match-p "*temp*" (buffer-name)))
 	   (not (string-match-p "*helm*" (buffer-name)))
-	   (not (string-match-p "*mu4e*" (buffer-name))))
+	   (not (string-match-p "*mu4e*" (buffer-name)))
+	   (not (string-match-p "*magit*" (buffer-name))))
       (if (and (boundp 'detached) detached)
 	  (setq-local bufler-workspace-name nil)
 	(if (not bufler-workspace-name)
@@ -315,7 +316,9 @@ Return values may be as follows:
   (if bufler-workspace-name
       (progn (setq-local bufler-workspace-name nil)
 	     (set (make-local-variable 'detached) 1)
-	     (setq-local cacheado nil))))
+	     (setq-local cacheado nil)
+	     (setf bufler-cache nil)
+	     (force-mode-line-update 'all))))
 
 
 ;; integración completa
