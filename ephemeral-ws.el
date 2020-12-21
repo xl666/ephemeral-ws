@@ -9,24 +9,51 @@
 		 (puthash key nil tabla)))
 	   tabla))
 
+
+(defun agregar-nuevo-buffer ()
+  (with-current-buffer (car (buffer-list))
+    (if (and (not (string-match-p "*temp*" (buffer-name)))
+	     (not (string-match-p "*helm*" (buffer-name)))
+	     (not (string-match-p "*mu4e*" (buffer-name)))
+	     (not (string-match-p "magit" (buffer-name)))
+	     (not (string-match-p "*Bufler*" (buffer-name)))
+	     (not (string-match-p "*Minibuf" (buffer-name))))
+	(if (and (boundp 'detached) detached)
+	    (setq-local bufler-workspace-name nil)
+	  (if (not bufler-workspace-name)
+	      (let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
+		
+		(if wr
+		    (progn
+		      (set (make-local-variable 'bufler-workspace-name) wr)
+		      (setf bufler-cache nil)
+		      (force-mode-line-update 'all)))))))))
+
+
+
+
 (defun nombre-buff(buffer)
-  (if (and (not (string-match-p "*temp*" (buffer-name)))
-	   (not (string-match-p "*helm*" (buffer-name)))
-	   (not (string-match-p "*mu4e*" (buffer-name)))
-	   (not (string-match-p "magit" (buffer-name)))
-	   (not (string-match-p "*Bufler*" (buffer-name))))
-      (if (and (boundp 'detached) detached)
-	  (setq-local bufler-workspace-name nil)
-	(if (not bufler-workspace-name)
-	    (let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
-	      
-	      (if wr
-		  (progn
-		    (set (make-local-variable 'bufler-workspace-name) wr)
-		    (setf bufler-cache nil)
-		    (force-mode-line-update 'all))
-		)))))
-  buffer)
+  (with-current-buffer buffer
+    (if (and (not (string-match-p "*temp*" (buffer-name)))
+	     (not (string-match-p "*helm*" (buffer-name)))
+	     (not (string-match-p "*mu4e*" (buffer-name)))
+	     (not (string-match-p "magit" (buffer-name)))
+	     (not (string-match-p "*Bufler*" (buffer-name))))
+	(if (and (boundp 'detached) detached)
+	    (setq-local bufler-workspace-name nil)
+	  (if (not bufler-workspace-name)
+	      (let* ((wr (gethash (get-proyectname-buffer buffer) proyectos-workspaces-hash)))
+		
+		(if wr
+		    (progn
+		      (set (make-local-variable 'bufler-workspace-name) wr)
+		      (set (make-local-variable 'popo) "popis")
+		      (setf bufler-cache nil)
+		      (force-mode-line-update 'all)
+		      (message popo)
+		      buffer)
+		  ))))
+      buffer)))
 
 
 
@@ -339,5 +366,6 @@ Return values may be as follows:
       (exwm-workspace-switch 0))))
 
 
-(advice-add 'generate-new-buffer :filter-return #'nombre-buff)
+; (advice-add 'generate-new-buffer :filter-return #'nombre-buff)
 ; (advice-remove 'generate-new-buffer #'nombre-buff)
+(add-hook 'buffer-list-update-hook 'agregar-nuevo-buffer)
