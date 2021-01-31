@@ -296,20 +296,30 @@ Return values may be as follows:
 
 ;; integración completa
 
+(defun cuerpo-crear-workspace (path-proyecto proyecto workspace)
+  (exwm-workspace-add)
+  (crear-asociacion proyecto workspace)
+  (set (make-local-variable 'bufler-workspace-name) workspace)
+  (bufler-workspace-frame-set `(,workspace))
+  (treemacs-do-remove-workspace workspace) ; try to remove if exists, prevetns a bug
+  (treemacs-do-create-workspace workspace)
+  (mi-treemacs-do-switch-workspace workspace)
+  (treemacs-add-project-to-workspace path-proyecto)
+  (borrar-cache))
+
+
+(defun crear-workspace-from-buffer (buffer workspace)
+  (let* ((path-proyecto (get-proyect-raiz-from-buffer buffer))
+	 (proyecto (projectile-project-name path-proyecto)))
+    (bufler-workspace-buffer-name-workspace workspace)
+    (cuerpo-crear-workspace path-proyecto proyecto workspace)))
+
 (defun crear-workspace ()
   (interactive)
   (let* ((path-proyecto (seleccionar-proyecto-and-buffercentral))
 	 (proyecto (projectile-project-name path-proyecto))
 	 (workspace (seleccionar-workspace)))
-    (progn (exwm-workspace-add)
-	   (crear-asociacion proyecto workspace)
-	   (set (make-local-variable 'bufler-workspace-name) workspace)
-	   (bufler-workspace-frame-set `(,workspace))
-	   (treemacs-do-remove-workspace workspace) ; try to remove if exists, prevetns a bug
-	   (treemacs-do-create-workspace workspace)
-	   (mi-treemacs-do-switch-workspace workspace)
-	   (treemacs-add-project-to-workspace path-proyecto)
-	   (borrar-cache))))
+    (cuerpo-crear-workspace path-proyecto proyecto workspace)))
 
 
 (defun matar-buffers (buffers)
