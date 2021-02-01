@@ -242,15 +242,18 @@
 (defun crear-asociacion (proyecto workspace)
   (puthash proyecto workspace proyectos-workspaces-hash))
 
+(defun asociar-proyecto-workspace-body (proyecto workspace)
+  (puthash (projectile-project-name proyecto)
+	   workspace proyectos-workspaces-hash)
+  (treemacs-add-project-to-workspace proyecto)
+  (borrar-cache))
+
 (defun asociar-proyecto-workspace ()
   (interactive)
   (let* ((todo (seleccionar-proyecto-workspace))
 	 (proyecto (first todo))
 	 (workspace (second todo)))
-    (progn (puthash (projectile-project-name proyecto)
-	    workspace proyectos-workspaces-hash)
-	   (treemacs-add-project-to-workspace proyecto)
-	   (borrar-cache))))
+    (asociar-proyecto-workspace-body proyecto workspace)))
 
 
 
@@ -296,6 +299,10 @@ Return values may be as follows:
 
 ;; integración completa
 
+(defun auto-start-workspace (workspace)
+  "Para extender"
+  nil)
+
 (defun cuerpo-crear-workspace (path-proyecto proyecto workspace)
   (exwm-workspace-add)
   (crear-asociacion proyecto workspace)
@@ -305,7 +312,8 @@ Return values may be as follows:
   (treemacs-do-create-workspace workspace)
   (mi-treemacs-do-switch-workspace workspace)
   (treemacs-add-project-to-workspace path-proyecto)
-  (borrar-cache))
+  (borrar-cache)
+  (auto-start-workspace workspace))
 
 
 (defun crear-workspace-from-buffer (buffer workspace)
@@ -313,6 +321,9 @@ Return values may be as follows:
 	 (proyecto (projectile-project-name path-proyecto)))
     (bufler-workspace-buffer-name-workspace workspace)
     (cuerpo-crear-workspace path-proyecto proyecto workspace)))
+
+
+
 
 (defun crear-workspace ()
   (interactive)
