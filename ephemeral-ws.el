@@ -228,8 +228,7 @@
   (interactive)
   (let ((current-ws (car (frame-parameter nil 'bufler-workspace-path))))
     (if (not current-ws)
-	(call-interactively #'bufler-switch-buffer)
-      
+	(call-interactively #'helm-buffers-list)
       (let* ((todo (tabla-buffers))
 	     (llaves (first todo))
 	     (tabla (second todo))
