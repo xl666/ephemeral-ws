@@ -224,7 +224,7 @@
 		  nil tabla)))
 	  `(,llaves ,tabla)))
 
-(defun seleccionar-buffer-workspace ()
+(defun seleccionar-buffer-workspace-old ()
   (interactive)
   (let ((current-ws (car (frame-parameter nil 'bufler-workspace-path))))
     (if (not current-ws)
@@ -235,8 +235,62 @@
 	     (label (completing-read "Buffer: " llaves)))
 	(switch-to-buffer (gethash label tabla))))))
 
+;;; helm
+
+(defun ephemeral-buffer-names ()
+  (let* ((lista-buffs (quitar-buffs (listar-en-workspace)))
+	 (ephe-buffs
+	 (if (eq (car lista-buffs) (current-buffer))
+	     (cdr lista-buffs)
+	   lista-buffs)))
+    (mapcar (lambda (buff) (buffer-name buff))
+	    ephe-buffs)))
 
 
+(defun ephemeral-helm-buffer-list ()
+  (funcall helm-buffer-list-reorder-fn (ephemeral-buffer-names) nil))
+
+(defclass ephemeral-helm-source-buffers (helm-source-sync helm-type-buffer)
+  ((buffer-list
+    :initarg :buffer-list
+    :initform #'ephemeral-helm-buffer-list
+    :custom function
+    :documentation
+    "  A function with no arguments to create buffer list.")
+   (init :initform 'helm-buffers-list--init)
+   (multimatch :initform nil)
+   (match :initform 'helm-buffers-match-function)
+   (persistent-action :initform 'helm-buffers-list-persistent-action)
+   (keymap :initform helm-buffer-map)
+   (migemo :initform 'nomultimatch)
+   (volatile :initform t)
+   (nohighlight :initform t)
+   (resume :initform (lambda () (setq helm-buffers-in-project-p nil)))
+   (help-message :initform 'helm-buffer-help-message)))
+
+(defvar ephemeral-helm-source-buffers-list nil)
+
+(defun ephemeral-helm-buffers-list ()
+  "Preconfigured `helm' to list buffers."
+  (interactive)
+  (unless ephemeral-helm-source-buffers-list
+    (setq ephemeral-helm-source-buffers-list
+          (helm-make-source "Buffers" 'ephemeral-helm-source-buffers)))
+  (helm :sources '(ephemeral-helm-source-buffers-list
+                   helm-source-buffer-not-found)
+        :buffer "*helm buffers*"
+        :keymap helm-buffer-map
+        :truncate-lines helm-buffers-truncate-lines
+        :left-margin-width helm-buffers-left-margin-width))
+
+(defun seleccionar-buffer-workspace ()
+  (interactive)
+  (let ((current-ws (car (frame-parameter nil 'bufler-workspace-path))))
+    (if (not current-ws)
+	(call-interactively #'helm-buffers-list)
+      (call-interactively #'ephemeral-helm-buffers-list))))
+
+;; asociaciones
 
 (defun crear-asociacion (proyecto workspace)
   (puthash proyecto workspace proyectos-workspaces-hash))
