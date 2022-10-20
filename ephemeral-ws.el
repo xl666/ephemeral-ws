@@ -46,7 +46,7 @@
 	    (setq-local bufler-workspace-name nil)
 	  (if (not bufler-workspace-name)
 	      (let* ((wr (gethash (get-proyectname-buffer buffer) proyectos-workspaces-hash)))
-		
+
 		(if wr
 		    (progn
 		      (set (make-local-variable 'bufler-workspace-name) wr)
@@ -54,14 +54,13 @@
 		      (setf bufler-cache nil)
 		      (force-mode-line-update 'all)
 		      (message popo)
-		      buffer)
-		  ))))
+		      buffer)))))
       buffer)))
 
 
 
- 
-(progn (treemacs) (treemacs)) ;; asegurarse de que treemacs cargue
+
+;;(progn (treemacs) (treemacs)) ;; asegurarse de que treemacs cargue
 
 
 (defun asociar-buffer-workspace ()
@@ -80,16 +79,14 @@
     (if ruta
 	(let* ((raiz (projectile-project-root ruta)))
 	  (if raiz
-	      (projectile-project-name raiz))))
-    ))
+	      (projectile-project-name raiz))))))
 
 (defun get-proyect-raiz-from-buffer (buffer)
   (let* ((ruta (buffer-local-value 'default-directory (current-buffer))))
     (if ruta
 	(let* ((raiz (projectile-project-root ruta)))
 	  (if raiz
-	      raiz)))
-    ))
+	      raiz)))))
 
 (defun listar-en-workspace ()
   "Devuelve una lista de buffers con el mismo workspace del frame"
@@ -144,8 +141,7 @@
   (mapcar (lambda (x)
 	    (with-current-buffer x
 	      (if (boundp 'cacheado)
-		  (progn (setq cacheado nil))
-		)))
+		  (progn (setq cacheado nil)))))
 	  (buffer-list)))
 
 
@@ -215,10 +211,10 @@
   "Para facilitar la creación de tabla hash"
   (let* ((tabla (make-hash-table :test 'equal))
 	 (lista-buffs (quitar-buffs (listar-en-workspace)))
-	 (llaves (label-buffers 
+	 (llaves (label-buffers
 		  (if (eq (car lista-buffs) (current-buffer))
 		      (cdr lista-buffs)
-		    
+
 		    lista-buffs)
 		  (mayor-mode-mas-largo lista-buffs)
 		  nil tabla)))
@@ -298,7 +294,7 @@
 (defun asociar-proyecto-workspace-body (proyecto workspace)
   (puthash (projectile-project-name proyecto)
 	   workspace proyectos-workspaces-hash)
-  (treemacs-add-project-to-workspace proyecto)
+					;(treemacs-add-project-to-workspace proyecto)
   (borrar-cache))
 
 (defun asociar-proyecto-workspace ()
@@ -356,17 +352,33 @@ Return values may be as follows:
   "Para extender"
   nil)
 
+(defun ephemeral--set-random-border-color () 
+  "Establece un color de borde del frame aleatorio, con base en los colores que me gustan"
+  (let ((colores '("orange" "yellow" "medium" "dark magenta" "dark red" "salmon" "dark green"
+		   "light sea green" "steel blue" "royal blue" "dark slate blue" "midnight blue"
+		   "blue violet"))) 
+    (set-face-attribute 'internal-border (selected-frame) 
+			:background
+			(seq-random-elt colores))))
+
 (defun cuerpo-crear-workspace (path-proyecto proyecto workspace)
   (exwm-workspace-add)
   (crear-asociacion proyecto workspace)
   (set (make-local-variable 'bufler-workspace-name) workspace)
   (bufler-workspace-frame-set `(,workspace))
-  (treemacs-do-remove-workspace workspace) ; try to remove if exists, prevetns a bug
-  (treemacs-do-create-workspace workspace)
-  (mi-treemacs-do-switch-workspace workspace)
-  (treemacs-add-project-to-workspace path-proyecto)
+  (lockViews-create-free)
+  (transparency 70)
+  (set-frame-parameter (selected-frame) 'internal-border-width 3)
+  (ephemeral--set-random-border-color)
+  (tab-bar-close-tab-by-name (get-tab-bar-name-recent-tab))
+					;(treemacs-do-remove-workspace workspace) ; try to remove if exists, prevetns a bug
+					;(treemacs-do-create-workspace workspace)
+					;(mi-treemacs-do-switch-workspace workspace)
+					;(treemacs-add-project-to-workspace path-proyecto)
   (borrar-cache)
-  (auto-start-workspace workspace))
+  (auto-start-workspace workspace)
+					;(exwm-outer-gaps-mode 1)
+  )
 
 
 (defun crear-workspace-from-buffer (buffer workspace)
@@ -393,12 +405,14 @@ Return values may be as follows:
 
 (defun borrar-workspace ()
   (interactive)
-  (let* ((workspace (car (frame-parameter nil 'bufler-workspace-path))))    
+  (let* ((workspace (car (frame-parameter nil 'bufler-workspace-path))))
     (if workspace
-	(progn (treemacs-do-remove-workspace workspace)
-	       (limpiar-hash proyectos-workspaces-hash workspace)
-	       (matar-buffers (listar-en-workspace))
-	       (exwm-workspace-delete)))))
+	(progn
+	  ;(treemacs-do-remove-workspace workspace)
+	  (limpiar-hash proyectos-workspaces-hash workspace)
+	  (matar-buffers (listar-en-workspace))
+	  (assoc-delete-all (get-bufler-workspace) lockViews-views-alist)
+	  (exwm-workspace-delete)))))
 
 
 (defun listar-workspaces (tabla)
@@ -432,17 +446,17 @@ Return values may be as follows:
 			      (if (car (frame-parameter nil 'bufler-workspace-path))
 				  (cons "*Default*"
 					(quitar-ws-lista
-				   (car (frame-parameter nil 'bufler-workspace-path))
-				   (listar-workspaces
-				    proyectos-workspaces-hash)))
+					 (car (frame-parameter nil 'bufler-workspace-path))
+					 (listar-workspaces
+					  proyectos-workspaces-hash)))
 				(listar-workspaces
-				    proyectos-workspaces-hash))))
+				 proyectos-workspaces-hash))))
 	 (frame (get-frame-from-workspace ws)))
     (if frame
 	(exwm-workspace-switch frame)
       (exwm-workspace-switch 0))))
 
 
-; (advice-add 'generate-new-buffer :filter-return #'nombre-buff)
-; (advice-remove 'generate-new-buffer #'nombre-buff)
+					; (advice-add 'generate-new-buffer :filter-return #'nombre-buff)
+					; (advice-remove 'generate-new-buffer #'nombre-buff)
 (add-hook 'buffer-list-update-hook 'agregar-nuevo-buffer)
