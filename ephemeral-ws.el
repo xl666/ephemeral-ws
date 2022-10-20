@@ -25,7 +25,7 @@
 	  (if (and (boundp 'detached) detached)
 	      (setq-local bufler-workspace-name nil)
 	    (if (not bufler-workspace-name)
-		(let* ((wr (gethash (get-proyectname-buffer (current-buffer)) proyectos-workspaces-hash)))
+		(let* ((wr (car(frame-parameter nil 'bufler-workspace-path))))
 		  (if wr
 		      (progn
 			(set (make-local-variable 'bufler-workspace-name) wr)
